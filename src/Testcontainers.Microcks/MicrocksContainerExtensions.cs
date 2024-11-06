@@ -22,6 +22,25 @@ public static class MicrocksContainerExtensions
     });
 
 
+    public static async Task<TestResult> TestEndpointAsync(
+        this MicrocksContainer container, TestRequest testRequest)
+    {
+        string httpEndpoint = container.GetHttpEndpoint() + "api/tests";
+        var content = new StringContent(JsonSerializer.Serialize(testRequest), Encoding.UTF8, "application/json");
+        var responseMessage = await Client.PostAsync(httpEndpoint, content);
+
+        if (responseMessage.StatusCode == HttpStatusCode.Created)
+        {
+            var responseContent = await responseMessage.Content.ReadAsStringAsync();
+
+            var testResult = JsonSerializer.Deserialize<TestResult>(responseContent);
+            var testResultId = testResult.Id;
+
+        }
+
+        throw new Exception("Couldn't launch on new test on Microcks. Please check Microcks container logs");
+    }
+
     internal static async Task ImportArtifactAsync(this MicrocksContainer container, string artifact, bool mainArtifact)
     {
         string url = $"{container.GetHttpEndpoint()}api/artifact/upload" + (mainArtifact ? "" : "?mainArtifact=false");
